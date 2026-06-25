@@ -1,6 +1,10 @@
 import './style.css'
 import {PumpState, ResultsState, setupPermutation, setupPump} from "./pumpe.ts";
 
+const defaultPump = "ハイドロポンプ";
+const pumpParameter = new URLSearchParams(window.location.search).get("pump")?.trim();
+const pump = pumpParameter ? Array.from(pumpParameter).slice(0, 20).join("") : defaultPump;
+
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
     <h1>Pumperodhy</h1>
@@ -33,18 +37,19 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </div>
 `
 
-const pumpState = new PumpState("ハイドロポンプ", false);
+const pumpState = new PumpState(pump, false);
 const results = new ResultsState(document.querySelector<HTMLDivElement>('#results')!)
 
 setupPump(document.querySelector<HTMLButtonElement>('#generate')!, pumpState, results);
 setupPump(document.querySelector<HTMLButtonElement>('#generate10')!, pumpState, results, 10);
 setupPermutation(document.querySelector<HTMLButtonElement>('#permutation')!, pumpState);
-setupShare(document.querySelector<HTMLAnchorElement>('#share')!, results);
+setupShare(document.querySelector<HTMLAnchorElement>('#share')!, results, pump);
 
-function setupShare(element: HTMLAnchorElement, results: ResultsState) {
+function setupShare(element: HTMLAnchorElement, results: ResultsState, pump: string) {
   element.addEventListener('mouseover', () => {
     const pumps = results.results.map((res) => res).join("\n");
-    const pageUrl = "https://nishinoyama.github.io/pumperodhy/";
+    const pageUrl = new URL("https://nishinoyama.github.io/pumperodhy/");
+    pageUrl.searchParams.set("pump", pump);
     const text = encodeURIComponent(`Pumperodhy\n${pumps}\n${pageUrl}\n#pumperodhy`);
     element.href = `https://twitter.com/intent/tweet?text=${text}`;
   });

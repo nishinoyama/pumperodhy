@@ -10,22 +10,28 @@ export class PumpState {
     this.generatePump = permutation ? this.generatePermutationPump : this.generateCombinationPump;
 
     // To determine the length of the permutation
-    const pumpRes = this.pump.split("");
-    let n = pumpRes.length;
-    let weight = 1;
-    const weights = [1];
-    for (let i = 0; i < n; i++) {
-      weight *= pumpRes.length - i;
-      weights.push(weight);
+    const pumpRes = splitGraphemes(this.pump);
+    const logWeights = [Number.NEGATIVE_INFINITY];
+    let logWeight = 0;
+    for (let length = 1; length <= pumpRes.length; length++) {
+      logWeight += Math.log(pumpRes.length - length + 1);
+      logWeights.push(logWeight);
     }
-    for (let i = 0; i < n; i++) {
-      weights[i + 1] += weights[i];
+
+    const maxLogWeight = logWeights[logWeights.length - 1];
+    const weights = [0];
+    for (let length = 1; length < logWeights.length; length++) {
+      weights.push(weights[length - 1] + Math.exp(logWeights[length] - maxLogWeight));
     }
     this.permutationWeights = weights;
   }
 
   generateCombinationPump(): string {
-    const res = this.pump.split("").filter((_) => Math.random() < 0.5).join("");
+    const pumpRes = splitGraphemes(this.pump);
+    if (pumpRes.length < 2) {
+      return this.pump;
+    }
+    const res = pumpRes.filter((_) => Math.random() < 0.5).join("");
     if (res === "" || res === this.pump) {
       return this.generateCombinationPump();
     }
@@ -33,7 +39,10 @@ export class PumpState {
   }
 
   generatePermutationPump(): string {
-    const pumpRes = this.pump.split("");
+    const pumpRes = splitGraphemes(this.pump);
+    if (pumpRes.length < 2) {
+      return this.pump;
+    }
     const length = this.getPermutationRandomLength();
     const levels = Array.from({length: pumpRes.length}, _ => Math.random());
     const order = levels.map((_, i) => i).sort((a, b) => levels[a] - levels[b]);
@@ -45,24 +54,25 @@ export class PumpState {
   }
 
   getPermutationRandomLength(): number {
-    const random = Math.floor(Math.random() * this.permutationWeights[this.permutationWeights.length - 1]);
-    let length = 0;
-    for (let i = 0; i < this.permutationWeights.length; i++) {
-      if (random < this.permutationWeights[i]) {
-        length = i;
-        break;
+    const random = Math.random() * this.permutationWeights[this.permutationWeights.length - 1];
+    for (let length = 1; length < this.permutationWeights.length; length++) {
+      if (random < this.permutationWeights[length]) {
+        return length;
       }
     }
-    if (length === 0) {
-      return this.getPermutationRandomLength();
-    }
-    return length;
+    return this.permutationWeights.length - 1;
   }
 
   changeMode(): void {
     this.permutation = !this.permutation;
     this.generatePump = this.permutation ? this.generatePermutationPump : this.generateCombinationPump;
   }
+}
+
+const graphemeSegmenter = new Intl.Segmenter(undefined, {granularity: "grapheme"});
+
+function splitGraphemes(value: string): string[] {
+  return Array.from(graphemeSegmenter.segment(value), ({segment}) => segment);
 }
 
 export class ResultsState {
@@ -99,14 +109,28 @@ export function setupPermutation(element: HTMLButtonElement, pumpState: PumpStat
 }
 
 function evalPump(pump: string): string {
+  const escapedPump = escapeHtml(pump);
   if (pump === "プンポロドイハ") {
-    return `<span class='pump-tier1'>${pump}</span>`;
+    return `<span class='pump-tier1'>${escapedPump}</span>`;
   }
   if (["ドロポン", "ハイドロ", "ハイポン"].includes(pump)) {
-    return `<span class='pump-tier2'>${pump}</span>`;
+    return `<span class='pump-tier2'>${escapedPump}</span>`;
   }
   if (["ポンプ", "イドンプ", "ドロンプ", "ハインプ", "ハドロン"].includes(pump)) {
-    return `<span class='pump-tier3'>${pump}</span>`;
+    return `<span class='pump-tier3'>${escapedPump}</span>`;
   }
-  return pump;
+  return escapedPump;
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    };
+    return entities[character];
+  });
 }
