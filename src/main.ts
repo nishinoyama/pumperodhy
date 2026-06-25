@@ -2,7 +2,8 @@ import './style.css'
 import {PumpState, ResultsState, setupPermutation, setupPump} from "./pumpe.ts";
 
 const defaultPump = "ハイドロポンプ";
-const pump = new URLSearchParams(window.location.search).get("pump")?.trim() || defaultPump;
+const pumpParameter = new URLSearchParams(window.location.search).get("pump")?.trim();
+const pump = pumpParameter ? Array.from(pumpParameter).slice(0, 20).join("") : defaultPump;
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
