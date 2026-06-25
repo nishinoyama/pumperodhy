@@ -3,7 +3,7 @@
 Use the `pump` query parameter to change the source string:
 
 ```
-https://nishinoyama.github.io/pumperodhy/?pump=テスト文字列
+https://nishinoyama.github.io/pumperodhy/?pump=アイアンヘッド
 ```
 
 ## Examples
