@@ -1,6 +1,9 @@
 import './style.css'
 import {PumpState, ResultsState, setupPermutation, setupPump} from "./pumpe.ts";
 
+const defaultPump = "ハイドロポンプ";
+const pump = new URLSearchParams(window.location.search).get("pump")?.trim() || defaultPump;
+
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
     <h1>Pumperodhy</h1>
@@ -33,7 +36,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </div>
 `
 
-const pumpState = new PumpState("ハイドロポンプ", false);
+const pumpState = new PumpState(pump, false);
 const results = new ResultsState(document.querySelector<HTMLDivElement>('#results')!)
 
 setupPump(document.querySelector<HTMLButtonElement>('#generate')!, pumpState, results);

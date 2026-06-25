@@ -10,7 +10,7 @@ export class PumpState {
     this.generatePump = permutation ? this.generatePermutationPump : this.generateCombinationPump;
 
     // To determine the length of the permutation
-    const pumpRes = this.pump.split("");
+    const pumpRes = Array.from(this.pump);
     let n = pumpRes.length;
     let weight = 1;
     const weights = [1];
@@ -25,7 +25,11 @@ export class PumpState {
   }
 
   generateCombinationPump(): string {
-    const res = this.pump.split("").filter((_) => Math.random() < 0.5).join("");
+    const pumpRes = Array.from(this.pump);
+    if (pumpRes.length < 2) {
+      return this.pump;
+    }
+    const res = pumpRes.filter((_) => Math.random() < 0.5).join("");
     if (res === "" || res === this.pump) {
       return this.generateCombinationPump();
     }
@@ -33,7 +37,10 @@ export class PumpState {
   }
 
   generatePermutationPump(): string {
-    const pumpRes = this.pump.split("");
+    const pumpRes = Array.from(this.pump);
+    if (pumpRes.length < 2) {
+      return this.pump;
+    }
     const length = this.getPermutationRandomLength();
     const levels = Array.from({length: pumpRes.length}, _ => Math.random());
     const order = levels.map((_, i) => i).sort((a, b) => levels[a] - levels[b]);
@@ -99,14 +106,28 @@ export function setupPermutation(element: HTMLButtonElement, pumpState: PumpStat
 }
 
 function evalPump(pump: string): string {
+  const escapedPump = escapeHtml(pump);
   if (pump === "プンポロドイハ") {
-    return `<span class='pump-tier1'>${pump}</span>`;
+    return `<span class='pump-tier1'>${escapedPump}</span>`;
   }
   if (["ドロポン", "ハイドロ", "ハイポン"].includes(pump)) {
-    return `<span class='pump-tier2'>${pump}</span>`;
+    return `<span class='pump-tier2'>${escapedPump}</span>`;
   }
   if (["ポンプ", "イドンプ", "ドロンプ", "ハインプ", "ハドロン"].includes(pump)) {
-    return `<span class='pump-tier3'>${pump}</span>`;
+    return `<span class='pump-tier3'>${escapedPump}</span>`;
   }
-  return pump;
+  return escapedPump;
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    };
+    return entities[character];
+  });
 }
