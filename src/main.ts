@@ -42,12 +42,13 @@ const results = new ResultsState(document.querySelector<HTMLDivElement>('#result
 setupPump(document.querySelector<HTMLButtonElement>('#generate')!, pumpState, results);
 setupPump(document.querySelector<HTMLButtonElement>('#generate10')!, pumpState, results, 10);
 setupPermutation(document.querySelector<HTMLButtonElement>('#permutation')!, pumpState);
-setupShare(document.querySelector<HTMLAnchorElement>('#share')!, results);
+setupShare(document.querySelector<HTMLAnchorElement>('#share')!, results, pump);
 
-function setupShare(element: HTMLAnchorElement, results: ResultsState) {
+function setupShare(element: HTMLAnchorElement, results: ResultsState, pump: string) {
   element.addEventListener('mouseover', () => {
     const pumps = results.results.map((res) => res).join("\n");
-    const pageUrl = "https://nishinoyama.github.io/pumperodhy/";
+    const pageUrl = new URL("https://nishinoyama.github.io/pumperodhy/");
+    pageUrl.searchParams.set("pump", pump);
     const text = encodeURIComponent(`Pumperodhy\n${pumps}\n${pageUrl}\n#pumperodhy`);
     element.href = `https://twitter.com/intent/tweet?text=${text}`;
   });

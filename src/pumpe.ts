@@ -10,22 +10,24 @@ export class PumpState {
     this.generatePump = permutation ? this.generatePermutationPump : this.generateCombinationPump;
 
     // To determine the length of the permutation
-    const pumpRes = Array.from(this.pump);
-    let n = pumpRes.length;
-    let weight = 1;
-    const weights = [1];
-    for (let i = 0; i < n; i++) {
-      weight *= pumpRes.length - i;
-      weights.push(weight);
+    const pumpRes = splitGraphemes(this.pump);
+    const logWeights = [Number.NEGATIVE_INFINITY];
+    let logWeight = 0;
+    for (let length = 1; length <= pumpRes.length; length++) {
+      logWeight += Math.log(pumpRes.length - length + 1);
+      logWeights.push(logWeight);
     }
-    for (let i = 0; i < n; i++) {
-      weights[i + 1] += weights[i];
+
+    const maxLogWeight = logWeights[logWeights.length - 1];
+    const weights = [0];
+    for (let length = 1; length < logWeights.length; length++) {
+      weights.push(weights[length - 1] + Math.exp(logWeights[length] - maxLogWeight));
     }
     this.permutationWeights = weights;
   }
 
   generateCombinationPump(): string {
-    const pumpRes = Array.from(this.pump);
+    const pumpRes = splitGraphemes(this.pump);
     if (pumpRes.length < 2) {
       return this.pump;
     }
@@ -37,7 +39,7 @@ export class PumpState {
   }
 
   generatePermutationPump(): string {
-    const pumpRes = Array.from(this.pump);
+    const pumpRes = splitGraphemes(this.pump);
     if (pumpRes.length < 2) {
       return this.pump;
     }
@@ -52,24 +54,25 @@ export class PumpState {
   }
 
   getPermutationRandomLength(): number {
-    const random = Math.floor(Math.random() * this.permutationWeights[this.permutationWeights.length - 1]);
-    let length = 0;
-    for (let i = 0; i < this.permutationWeights.length; i++) {
-      if (random < this.permutationWeights[i]) {
-        length = i;
-        break;
+    const random = Math.random() * this.permutationWeights[this.permutationWeights.length - 1];
+    for (let length = 1; length < this.permutationWeights.length; length++) {
+      if (random < this.permutationWeights[length]) {
+        return length;
       }
     }
-    if (length === 0) {
-      return this.getPermutationRandomLength();
-    }
-    return length;
+    return this.permutationWeights.length - 1;
   }
 
   changeMode(): void {
     this.permutation = !this.permutation;
     this.generatePump = this.permutation ? this.generatePermutationPump : this.generateCombinationPump;
   }
+}
+
+const graphemeSegmenter = new Intl.Segmenter(undefined, {granularity: "grapheme"});
+
+function splitGraphemes(value: string): string[] {
+  return Array.from(graphemeSegmenter.segment(value), ({segment}) => segment);
 }
 
 export class ResultsState {
